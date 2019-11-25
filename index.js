@@ -7,6 +7,9 @@ const os = require("os");
 const pkg = require("./package.json");
 const util = require("util");
 
+// Default expire time for a lock in seconds
+const DEFAULT_EXPIRE_TIME = 60 * 60 * 24; // 1 day
+
 const FailClosed = function(config) {
   if (!(this instanceof FailClosed)) {
     return new FailClosed(config);
@@ -33,12 +36,12 @@ FailClosed.schema = {
   config: require("./schema/failClosedConfig.js"),
 };
 
-FailClosed.prototype.acquireLock = function(id, callback) {
+FailClosed.prototype.acquireLock = function(options, callback) {
   const self = this;
   const workflow = new events.EventEmitter();
   setImmediate(() =>
     workflow.emit("start", {
-      id,
+      id: options.id,
       owner:
         self._config.owner ||
         `${pkg.name}@${pkg.version}_${os.userInfo().username}@${os.hostname()}`,
@@ -53,6 +56,7 @@ FailClosed.prototype.acquireLock = function(id, callback) {
       Item: {
         owner: dataBag.owner,
         guid: dataBag.guid,
+        expiresAt: dataBag.expiresAt,
       },
       ConditionExpression: "attribute_not_exists(#partitionKey)",
       ExpressionAttributeNames: {
@@ -125,7 +129,7 @@ FailOpen.schema = {
   config: require("./schema/failOpenConfig.js"),
 };
 
-FailOpen.prototype.acquireLock = function(id, callback) {
+FailOpen.prototype.acquireLock = function(options, callback) {
   const self = this;
   const workflow = new events.EventEmitter();
   setImmediate(() =>
@@ -136,6 +140,7 @@ FailOpen.prototype.acquireLock = function(id, callback) {
         `${pkg.name}@${pkg.version}_${os.userInfo().username}@${os.hostname()}`,
       retryCount: self._config.retryCount,
       guid: crypto.randomBytes(64),
+      expiresAt: options.expiresAt || DEFAULT_EXPIRE_TIME,
     })
   );
   workflow.on("start", dataBag => workflow.emit("check for existing lock", dataBag));
@@ -176,6 +181,7 @@ FailOpen.prototype.acquireLock = function(id, callback) {
         leaseDurationMs: self._leaseDurationMs,
         owner: dataBag.owner,
         guid: dataBag.guid,
+        expiresAt: dataBag.expiresAt,
       },
       ConditionExpression: "attribute_not_exists(#partitionKey)",
       ExpressionAttributeNames: {
