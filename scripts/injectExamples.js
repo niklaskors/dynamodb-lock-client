@@ -55,18 +55,18 @@ const tests = readmeDoc.toString().match(/## Tests/);
 
 // some safety checks
 if (!usage) {
-    console.error("Unable to find ## Usage in README");
-    process.exit(1);
+  console.error("Unable to find ## Usage in README");
+  process.exit(1);
 }
 
 if (!tests) {
-    console.error("Unable to find ## Tests in README");
-    process.exit(1);
+  console.error("Unable to find ## Tests in README");
+  process.exit(1);
 }
 
 if (tests.index < usage.index) {
-    console.error("## Tests is after ## Usage, existing");
-    process.exit(1);
+  console.error("## Tests is after ## Usage, existing");
+  process.exit(1);
 }
 
 const firstSlice = readmeDoc.toString().slice(0, usage.index);
