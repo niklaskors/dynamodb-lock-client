@@ -47,6 +47,7 @@ FailClosed.prototype.acquireLock = function(options, callback) {
         `${pkg.name}@${pkg.version}_${os.userInfo().username}@${os.hostname()}`,
       retryCount: self._config.retryCount,
       guid: crypto.randomBytes(64),
+      expiresAt: options.expiresAt || DEFAULT_EXPIRE_TIME,
     })
   );
   workflow.on("start", dataBag => workflow.emit("acquire lock", dataBag));
